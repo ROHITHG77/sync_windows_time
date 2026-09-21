@@ -52,51 +52,6 @@ def get_ntp_time(server):
         print(f"Error connecting to {server}: {e}")
         return None
 
-def get_system_date_format():
-    """Detect the system's date format."""
-    try:
-        # Try to get date format using PowerShell
-        result = subprocess.run(
-            ['powershell', '-command', 
-             "(Get-Culture).DateTimeFormat.ShortDatePattern"],
-            capture_output=True, text=True, check=True
-        )
-        date_format = result.stdout.strip()
-        
-        # Convert .NET format to strftime format
-        # Most common patterns:
-        # MM/dd/yyyy -> %m/%d/%y (US)
-        # dd/MM/yyyy -> %d/%m/%y (UK/Europe)
-        # yyyy/MM/dd -> %y/%m/%d (East Asia)
-        
-        # Simple conversion for the most common cases
-        date_format = date_format.replace('yyyy', '%Y')
-        date_format = date_format.replace('yy', '%y')
-        date_format = date_format.replace('MM', '%m')
-        date_format = date_format.replace('M', '%m')
-        date_format = date_format.replace('dd', '%d')
-        date_format = date_format.replace('d', '%d')
-        
-        return date_format
-    except Exception:
-        # Fallback to a simple check based on locale
-        try:
-            # Get the locale's date representation
-            locale.setlocale(locale.LC_TIME, '')
-            date_format = locale.nl_langinfo(locale.D_FMT)
-            return date_format
-        except Exception:
-            # Final fallback - use a heuristic based on country code
-            try:
-                country = os.environ.get('COUNTRY', '')
-                if country in ['US', 'PH', 'CA']:
-                    return '%m-%d-%y'  # MM-DD-YY (US style)
-                else:
-                    return '%d-%m-%y'  # DD-MM-YY (most other countries)
-            except:
-                # Default to DD-MM-YY as it's the most widely used
-                return '%d-%m-%y'
-
 def set_windows_time(timestamp):
     """Set the Windows system time using the timestamp."""
     # Convert Unix timestamp to datetime
